@@ -1,0 +1,7 @@
+; TelnetVXP.def : Declares the module parameters for the DLL.
+
+LIBRARY      "TelnetVXP"
+DESCRIPTION  'TelnetVXP Windows Dynamic Link Library'
+
+EXPORTS
+    vm_entry @1
