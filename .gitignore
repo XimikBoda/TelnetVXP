@@ -389,3 +389,4 @@ config.xml
 *.nam
 custom_prebuild.bat
 Packagedll.bat
+TelnetVXP.dll
