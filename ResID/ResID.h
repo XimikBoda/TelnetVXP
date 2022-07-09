@@ -20,6 +20,7 @@
 
 #define  STR_ID_HELLO    1
 
+
 #ifdef __cplusplus
     }
 #endif

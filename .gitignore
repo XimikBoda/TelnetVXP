@@ -387,3 +387,5 @@ config.xml
 *.id2
 *.til
 *.nam
+custom_prebuild.bat
+Packagedll.bat

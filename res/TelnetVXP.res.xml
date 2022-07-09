@@ -1,3 +1,4 @@
 <APP id="APP_TelnetVXP">
+    <RESOLUTION width="240" height="320" class="image" />
     <STRING>.\res\ref_list_TelnetVXP.txt</STRING>
 </APP>

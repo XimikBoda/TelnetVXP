@@ -223,15 +223,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath=".\Console.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Consone.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TelnetVXP.cpp"
+				RelativePath=".\main.cpp"
 				>
 			</File>
 			<File
@@ -244,23 +236,11 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath=".\Console.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Editor.h"
-				>
-			</File>
-			<File
-				RelativePath=".\font.h"
-				>
-			</File>
-			<File
 				RelativePath=".\main.h"
 				>
 			</File>
 			<File
-				RelativePath="TelnetVXP.h"
+				RelativePath=".\ProFont6x11.h"
 				>
 			</File>
 		</Filter>
