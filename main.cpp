@@ -19,7 +19,7 @@ void vm_main(void){
 
 	console.init();
 	vm_reg_sysevt_callback(handle_sysevt);
-	//vm_reg_keyboard_callback(handle_keyevt);
+	vm_reg_keyboard_callback(handle_keyevt);
 	//vm_reg_pen_callback(handle_penevt);
 }
 
@@ -58,7 +58,7 @@ void handle_sysevt(VMINT message, VMINT param) {
 					sprintf(tmp,"\033[%dm %3d\033[m", n, n);
 					console.putstr(tmp);
 				}
-				console.putstr("\n");
+				console.putstr("\n\033[m");
 			}
 		}
 		break;
@@ -80,5 +80,21 @@ void handle_sysevt(VMINT message, VMINT param) {
 			vm_graphic_delete_layer(layer_hdls[1]);
 		}
 		break;	
+	}
+}
+
+void handle_keyevt(VMINT event, VMINT keycode) {
+	switch(event){
+		case VM_KEY_EVENT_DOWN:
+			console.putstr("Test scroll\n");
+			draw();
+			switch(event){
+				case VM_KEY_OK:
+				case VM_KEY_VOL_UP:
+					break;
+				case VM_KEY_LEFT_SOFTKEY:
+					break;
+			}
+			break;
 	}
 }

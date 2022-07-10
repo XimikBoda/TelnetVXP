@@ -19,6 +19,7 @@ class Console
 {
 public:
 	Symbol **main_text;
+	Symbol **scroll_temp_text;
 	Symbol *history_text[count_of_lines];
 
 	enum Status{
@@ -63,7 +64,9 @@ public:
 	void previos_p();
 	void next_p();
 	void new_line();
+	void scroll(int v);
 
+	void draw_xy_char(int x, int y);
 	void draw_cur_char();
 
 	

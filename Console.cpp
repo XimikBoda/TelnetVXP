@@ -34,12 +34,19 @@ int Console::get_n_param(int n, int a){
 }
 
 void Console::attributes(){
+	if(args[1]==2&&args[0]%10==8)
+		if(args[0]/10==3){
+			cur_textcolor=VM_COLOR_888_TO_565(args[2],args[3],args[4]);
+			return;
+		}else if(args[0]/10==4){
+			cur_backcolor=VM_COLOR_888_TO_565(args[2],args[3],args[4]);
+			return;
+		}
+	if(args[0]==0)
+		cur_textcolor=0xFFFF, cur_backcolor=0x0000, bright=0; //Reset
+
 	for(int i=0;i<narg;++i){
 		int pp=get_n_param(i), p=pp%10;
-
-		if(pp==0)
-			if(i==0)
-				cur_textcolor=0xFFFF, cur_backcolor=0x0000, bright=0;
 
 		if(bright&&p!=8&&((pp/10)==3||(pp/10)==4))
 			pp+=60;
@@ -62,23 +69,12 @@ void Console::attributes(){
 			case 3:
 				if(p==9)
 					cur_textcolor=0xFFFF;
-				else if(p==8){
-					if(i==0&&get_n_param(1)==2)
-						cur_textcolor=VM_COLOR_888_TO_565(get_n_param(2),
-						get_n_param(3),get_n_param(4));
-					return;
-				}else
+				else
 					cur_textcolor=maincolors[p];
 				break;
 			case 4:
 				if(p==9)
 					cur_backcolor=0x0000;
-				else if(p==8){
-					if(i==0&&get_n_param(1)==2)
-						cur_backcolor=VM_COLOR_888_TO_565(get_n_param(2),
-						get_n_param(3),get_n_param(4));
-					return;
-				}
 				else
 					cur_backcolor=maincolors[p];
 				break;
@@ -142,6 +138,7 @@ void Console::analise_escape(char c){
 	switch(c){
 		case '[':
 			status=CSI;
+			clear_args();
 			break;
 		default:
 			printf("%c\n", c);
@@ -233,10 +230,81 @@ void Console::next_p(){
 void Console::new_line(){
 	cursor_y=cursor_y+1;
 	cursor_x=0;
-	if(cursor_y>terminal_h)
-		cursor_y=terminal_h;
+	if(cursor_y>=scroll_end_row){
+		cursor_y=scroll_end_row-1;
+		scroll(1);
+	}
 }
 
+void Console::scroll(int v){
+	if(scroll_value+v<0)
+		v=-scroll_value;
+
+	if(scroll_value+v>=count_of_lines)//todo
+		v=count_of_lines-1-scroll_value;
+	
+	int scroll_height = scroll_end_row - scroll_start_row;
+
+	if(v>scroll_height){
+		scroll(v-scroll_height);//todo
+		scroll(v);
+		return;
+		//v=scroll_height;
+	}
+	if(v<-scroll_height){
+		scroll(+scroll_height+v);//todo
+		scroll(v);
+		return;
+		//v=-scroll_height;
+	}
+	if(v>0){
+		for(int i=0; i<v; ++i){
+			scroll_temp_text[i]=history_text[i+scroll_value];  //1
+			history_text[i+scroll_value]=main_text[i+scroll_start_row]; //2
+		}
+		for(int i=0; i<scroll_height-v; ++i)
+			main_text[i+scroll_start_row]=main_text[scroll_start_row+i+v];//3
+		
+		for(int i=0; i<v; ++i)
+			main_text[i+scroll_end_row-v]=scroll_temp_text[i];//4
+
+		for(int i=scroll_start_row*char_height;i <(scroll_end_row-v)*char_height; ++i) //redraw
+			for(int j=0; j<scr_w; ++j)
+				((unsigned short*)scr_buf)[i*scr_w+j]=((unsigned short*)scr_buf)[(i+v*char_height)*scr_w+j];
+
+		for(int i=0; i<v; ++i)
+			for(int j=0; j<terminal_w; ++j)
+				draw_xy_char(i+scroll_end_row-v,j);
+
+	}else if(v<0){
+		v=-v;
+		for(int i=0; i<v; ++i){
+			scroll_temp_text[i]=history_text[i-v+scroll_value];  //1
+			history_text[i-v+scroll_value]=main_text[i+scroll_end_row-v]; //2
+		}
+		for(int i=0; i<scroll_height-v; ++i)
+			main_text[scroll_end_row-i-1]=main_text[scroll_end_row-i-1-v];//3
+		
+		for(int i=0; i<v; ++i)
+			main_text[i+scroll_start_row]=scroll_temp_text[i];//4
+
+
+		//todo
+	}
+
+}
+
+void Console::draw_xy_char(int x, int y){
+	const unsigned char *font_ch=ProFont6x11+5 + 12*main_text[y][x].ch + 1;
+	unsigned short textcolor = main_text[y][x].textcolor , backcolor = main_text[y][x].backcolor; 
+
+	for(int i=0;i<char_height;++i){
+		unsigned short* scr_buf= (unsigned short*)this->scr_buf + x*char_width+(y*char_height+i)*scr_w;
+		for(int j=0;j<char_width;++j)
+				scr_buf[j]=((((*font_ch)>>j)&1)?textcolor:backcolor);
+		++font_ch;
+	}
+}
 
 void Console::draw_cur_char(){
 	const unsigned char *font_ch=ProFont6x11+5 + 12*main_text[cursor_y][cursor_x].ch + 1;
@@ -266,7 +334,7 @@ void Console::init(){
 	terminal_h=scr_h/char_height;
 
 	scroll_start_row = 0;
-	scroll_end_row = terminal_w;
+	scroll_end_row = terminal_h;
 	scroll_value = 0;
 
 	main_color = 0x0000;
@@ -285,16 +353,24 @@ void Console::init(){
 		for(int j=0; j<= terminal_w; ++j)
 			main_text[i][j].reset();
 	}
+
+	scroll_temp_text=(Symbol**)vm_malloc((terminal_h+1)*sizeof(Symbol*));
 		
 
-	//for(int i=0;i<count_of_lines;++i){
-	//	text[i]=(Symbol*)vm_malloc((terminal_w+1)*sizeof(Symbol));
-		//clear_line(i);
-	//}
+	for(int i=0; i<count_of_lines; ++i){
+		history_text[i]=(Symbol*)vm_malloc((terminal_w+1)*sizeof(Symbol));
+		for(int j=0; j<= terminal_w; ++j)
+			history_text[i][j].reset();
+	}
 }
 
 Console::~Console(void){
 	for(int i=0;i<terminal_h;++i)
 		vm_free(main_text[i]);
 	vm_free(main_text);
+
+	vm_free(scroll_temp_text);
+	
+	for(int i=0;i<count_of_lines;++i)
+		vm_free(history_text[i]);
 }
