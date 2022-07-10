@@ -18,30 +18,51 @@ struct Symbol{
 class Console
 {
 public:
-	Symbol *text[count_of_lines];
+	Symbol **main_text;
+	Symbol *history_text[count_of_lines];
 
 	enum Status{
 		MAIN,
 		ESCAPE,
-		COMAND
+		ARGS,
+		CSI
 	};
 
 	int cursor_x, cursor_y;
 	int saved_cursor_x, saved_cursor_y;
 	int terminal_w, terminal_h;
+
+	int scroll_start_row, scroll_end_row, scroll_value; 
+
+	bool bright;
+
+
 	unsigned short main_color;
 	unsigned short cur_textcolor, cur_backcolor; 
 
 	VMUINT8* scr_buf;
 
-	unsigned char narg, args[16];
+	int narg, args[16];
 
-	Status status;
+	Status status, last_status;
 
-	void putchar(char c);
+	int get_n_param(int n, int a=0);
+	void attributes();
 
-	void putc(char c);
+	void clear_args();
+
+	void analise_args(char c);
+	void analise_CSI(char c);
+	void analise_escape(char c);
+	void put_char(char c);
+
+	void put_c(char c);
 	void putstr(const char *str, int len = -1);
+
+
+	void previos_p();
+	void next_p();
+	void new_line();
 
 	void draw_cur_char();
 

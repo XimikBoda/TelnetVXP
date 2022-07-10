@@ -40,8 +40,27 @@ void handle_sysevt(VMINT message, VMINT param) {
 		layer_bufs[0]=vm_graphic_get_layer_buffer(layer_hdls[0]);
 		layer_bufs[1]=vm_graphic_get_layer_buffer(layer_hdls[1]);
 
+		vm_switch_power_saving_mode(turn_off_mode);
+
 		console.scr_buf=layer_bufs[0];
 		console.draw_all();
+
+		console.putstr("Test\n");
+
+		{
+			char tmp[100];
+			int i, j, n;
+
+			for (i = 0; i < 11; i++) {
+				for (j = 0; j < 10; j++) {
+					n = 10 * i + j;
+					if (n > 107) break;
+					sprintf(tmp,"\033[%dm %3d\033[m", n, n);
+					console.putstr(tmp);
+				}
+				console.putstr("\n");
+			}
+		}
 		break;
 		
 	case VM_MSG_PAINT:
@@ -49,6 +68,7 @@ void handle_sysevt(VMINT message, VMINT param) {
 		break;
 		
 	case VM_MSG_INACTIVE:
+		vm_switch_power_saving_mode(turn_on_mode);
 		if( layer_hdls[0] != -1 ){
 			vm_graphic_delete_layer(layer_hdls[0]);
 			vm_graphic_delete_layer(layer_hdls[1]);
