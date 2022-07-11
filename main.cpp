@@ -1,6 +1,7 @@
 #include "main.h"
 #include "Console.h"
 #include "Telnet.h"
+#include "T2Input.h"
 #include "vmtimer.h"
 
 //Global
@@ -10,6 +11,7 @@ VMINT layer_hdls[2] = {-1,-1};
 
 Console console;
 Telnet telnet;
+T2Input t2input;
 
 int main_timer_id = -1;
 
@@ -45,17 +47,19 @@ void vm_main(void){
 
 	console.init();
 	telnet.init();
+	t2input.init();
 
 	telnet.connect_to("127.0.0.1", 23);
 
 
 	vm_reg_sysevt_callback(handle_sysevt);
 	vm_reg_keyboard_callback(handle_keyevt);
-	//vm_reg_pen_callback(handle_penevt);
+	vm_reg_pen_callback(handle_penevt);
 }
 
 void draw(){
 	vm_graphic_fill_rect(layer_bufs[1], 0, 0, scr_w, scr_h, tr_color, tr_color);
+	t2input.draw();
 	vm_graphic_flush_layer(layer_hdls, 2);
 }
 
@@ -80,6 +84,9 @@ void handle_sysevt(VMINT message, VMINT param) {
 
 		console.scr_buf=layer_bufs[0];
 		console.draw_all();
+
+		t2input.scr_buf=layer_bufs[1];
+		t2input.layer_handle=layer_hdls[1];
 
 		if(main_timer_id==-1)
 			main_timer_id = vm_create_timer(1000/15, timer); //15 fps
@@ -123,4 +130,9 @@ void handle_keyevt(VMINT event, VMINT keycode) {
 			}
 			break;
 	}
+}
+
+void handle_penevt(VMINT event, VMINT x, VMINT y){
+	t2input.handle_penevt(event, x, y);
+	draw();
 }

@@ -231,6 +231,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\T2Input.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Telnet.cpp"
 				>
 			</File>
@@ -253,6 +257,10 @@
 			</File>
 			<File
 				RelativePath=".\ProFont6x11.h"
+				>
+			</File>
+			<File
+				RelativePath=".\T2Input.h"
 				>
 			</File>
 			<File
