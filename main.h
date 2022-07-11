@@ -12,3 +12,7 @@ extern VMUINT8 *layer_bufs[2];
 extern VMINT layer_hdls[2];
 
 const unsigned short tr_color = VM_COLOR_888_TO_565(0, 255, 255);
+
+#ifndef WIN32
+#define printf(...)
+#endif

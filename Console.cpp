@@ -29,6 +29,18 @@ const unsigned short brightcolors[8] =
 static bool isdigit(int c){
 	return c>='0' && c<='9';
 }
+
+void Console::check_xy_on_curent_screan(){
+	if(cursor_x<0)
+		cursor_x=0;
+	if(cursor_x>=terminal_w)
+		cursor_x=terminal_w-1;
+	if(cursor_y<scroll_value)
+		cursor_y=scroll_value;
+	if(cursor_y>=terminal_h)
+		cursor_y=terminal_h-1;
+}
+
 int Console::get_n_param(int n, int a){
 	return args[n]?args[n]:a;
 }
@@ -94,6 +106,29 @@ void Console::attributes(){
 	}
 }
 
+void Console::erase_display(int t){
+	switch(t){
+		case 0:
+			erase_line(0);
+			for(int i=cursor_y+1;i<terminal_h;++i)
+				erase_line(2,i);
+			break;
+		case 1:
+			erase_line(1);
+			for(int i=0;i<cursor_y;++i)
+				erase_line(2,i);
+			break;
+		case 3:
+			for(int i=0;i<=count_of_lines;++i)
+				for(int j=0;j<=terminal_h;++j)
+					history_text[i][j].reset();
+		case 2:
+			for(int i=0;i<terminal_h;++i)
+				erase_line(2,i);
+			break;
+	}
+}
+
 void Console::clear_args(){
 	for(int i=0; i<narg; ++i)
 		args[i]=0;
@@ -114,6 +149,7 @@ void Console::analise_args(char c){
 	}
 }
 
+
 void Console::analise_CSI(char c){
 	if(isdigit(c)||c==';'){
 		clear_args();
@@ -122,13 +158,131 @@ void Console::analise_CSI(char c){
 		analise_args(c);
 	}else
 		switch(c){
+			case '@':
+				for(int i=0; i<args[0]; ++i)
+					put_char(' ');
+				status=MAIN;
+				break;
+			case 'A':
+				cursor_y -= get_n_param(0,1);
+				if(cursor_y<=0)
+					cursor_y=0;
+				status=MAIN;
+				break;
+			case 'B':
+				cursor_y += get_n_param(0,1);
+				if(cursor_y>terminal_h)
+					cursor_y=terminal_h;
+				status=MAIN;
+				break;
+			case 'C':
+				cursor_x += get_n_param(0,1);
+				if(cursor_x>terminal_w)
+					cursor_x=terminal_w;
+				status=MAIN;
+				break;
+			case 'D':
+				cursor_x -= get_n_param(0,1);
+				if(cursor_x<=0)
+					cursor_x=0;
+				status=MAIN;
+				break;
+			case 'E':
+				cursor_y+=get_n_param(0,1);
+				cursor_x=0;
+				check_xy_on_curent_screan();
+				status=MAIN;
+				break;
+			case 'F':
+				cursor_y-=get_n_param(0,1);
+				cursor_x=0;
+				check_xy_on_curent_screan();
+				status=MAIN;
+				break;
+			case 'G':
+				cursor_x=get_n_param(0,1)-1;
+				check_xy_on_curent_screan();
+				status=MAIN;
+				break;
+			case 'H':
+			case 'f':
+				cursor_y=scroll_value+get_n_param(0,1)-1;
+				cursor_x=get_n_param(1,1)-1;
+				check_xy_on_curent_screan();
+				status=MAIN;
+				break;
+			case 'J':
+				erase_display(get_n_param(0));
+				status=MAIN;
+				break;
+
 			case 'm':
 				attributes();
 				status=MAIN;
 				break;
 
+			case '?':
+				status=ESCAPE_QUESTION;
+				clear_args();
+				break;
+
 			default:
-				printf("%c\n", c);
+				printf("CSI %c\n", c);
+				status=MAIN;
+				break;
+		}
+}
+
+void  Console::erase_line(int t, int y){
+	int st=(t==0?cursor_x:0);
+	int end=(t==1?cursor_x:terminal_w-1);
+	for(int i=st;i<=end;++i)
+		main_text[cursor_y][i].reset();
+}
+void  Console::erase_line(int t){
+	int st=(t==0?cursor_x:0);
+	int end=(t==1?cursor_x:terminal_w-1);
+	for(int i=st;i<=end;++i)
+		main_text[cursor_y][i].reset();
+}
+
+void Console::analise_escape_hash(char c){
+	switch(c){
+		default:
+			printf("ESCAPE_HASH %c\n", c);
+			status=MAIN;
+			break;
+	}
+}
+
+void Console::analise_escape_left_br(char c){
+	switch(c){
+		default:
+			printf("ESCAPE_LEFT_BR %c\n", c);
+			status=MAIN;
+			break;
+	}
+}
+
+void Console::analise_escape_right_br(char c){
+	switch(c){
+		default:
+			printf("ESCAPE_RIGTH_BR %c\n", c);
+			status=MAIN;
+			break;
+	}
+}
+
+void Console::analise_escape_question(char c){
+	if(isdigit(c)||c==';'){
+		clear_args();
+		last_status=ESCAPE_QUESTION;
+		status=ARGS;
+		analise_args(c);
+	}else
+		switch(c){
+			default:
+				printf("ESCAPE_QUESTION %c\n", c);
 				status=MAIN;
 				break;
 		}
@@ -138,6 +292,23 @@ void Console::analise_escape(char c){
 	switch(c){
 		case '[':
 			status=CSI;
+			clear_args();
+			break;
+		case '%':
+			status=MAIN;
+			printf("%%!!!\n");
+			clear_args();
+			break;
+		case '#':
+			status=ESCAPE_HASH;
+			clear_args();
+			break;
+		case '(':
+			status=ESCAPE_LEFT_BR;
+			clear_args();
+			break;
+		case ')':
+			status=ESCAPE_RIGTH_BR;
 			clear_args();
 			break;
 		default:
@@ -200,6 +371,18 @@ void Console::put_c(char c){
 			break;
 		case CSI:
 			analise_CSI(c);
+			break;
+		case ESCAPE_HASH:
+			analise_escape_hash(c);
+			break;
+		case ESCAPE_LEFT_BR:
+			analise_escape_left_br(c);
+			break;
+		case ESCAPE_RIGTH_BR:
+			analise_escape_right_br(c);
+			break;
+		case ESCAPE_QUESTION:
+			analise_escape_question(c);
 			break;
 	}
 	//vm_graphic_flush_layer(layer_hdls, 1);
@@ -274,7 +457,9 @@ void Console::scroll(int v){
 
 		for(int i=0; i<v; ++i)
 			for(int j=0; j<terminal_w; ++j)
-				draw_xy_char(i+scroll_end_row-v,j);
+				draw_xy_char(j, i+scroll_end_row-v);
+
+		scroll_value+=v;
 
 	}else if(v<0){
 		v=-v;
@@ -288,7 +473,15 @@ void Console::scroll(int v){
 		for(int i=0; i<v; ++i)
 			main_text[i+scroll_start_row]=scroll_temp_text[i];//4
 
+		for(int i=(scroll_end_row)*char_height-1; i>=(scroll_start_row+v)*char_height; --i) //redraw
+			for(int j=0; j<scr_w; ++j)
+				((unsigned short*)scr_buf)[i*scr_w+j]=((unsigned short*)scr_buf)[(i-v*char_height)*scr_w+j];
 
+		for(int i=0; i<v; ++i)
+			for(int j=0; j<terminal_w; ++j)
+				draw_xy_char(j, i);
+
+		scroll_value-=v;
 		//todo
 	}
 

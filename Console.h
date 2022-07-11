@@ -26,7 +26,11 @@ public:
 		MAIN,
 		ESCAPE,
 		ARGS,
-		CSI
+		CSI,
+		ESCAPE_HASH,
+		ESCAPE_LEFT_BR,
+		ESCAPE_RIGTH_BR,
+		ESCAPE_QUESTION
 	};
 
 	int cursor_x, cursor_y;
@@ -47,14 +51,23 @@ public:
 
 	Status status, last_status;
 
+	void check_xy_on_curent_screan();
+
 	int get_n_param(int n, int a=0);
 	void attributes();
+	void erase_display(int t);
+	void erase_line(int t);
+	void erase_line(int t, int y);
 
 	void clear_args();
 
 	void analise_args(char c);
 	void analise_CSI(char c);
 	void analise_escape(char c);
+	void analise_escape_hash(char c);
+	void analise_escape_left_br(char c);
+	void analise_escape_right_br(char c);
+	void analise_escape_question(char c);
 	void put_char(char c);
 
 	void put_c(char c);

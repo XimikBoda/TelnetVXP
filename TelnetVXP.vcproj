@@ -231,6 +231,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Telnet.cpp"
+				>
+			</File>
+			<File
 				RelativePath="TelnetVXP.def"
 				>
 			</File>
@@ -249,6 +253,10 @@
 			</File>
 			<File
 				RelativePath=".\ProFont6x11.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Telnet.h"
 				>
 			</File>
 		</Filter>
