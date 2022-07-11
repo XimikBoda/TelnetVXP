@@ -227,7 +227,7 @@ void Console::analise_CSI(char c){
 				break;
 
 			default:
-				printf("CSI %c\n", c);
+				my_printf("CSI %c\n", c);
 				status=MAIN;
 				break;
 		}
@@ -237,7 +237,7 @@ void  Console::erase_line(int t, int y){
 	int st=(t==0?cursor_x:0);
 	int end=(t==1?cursor_x:terminal_w-1);
 	for(int i=st;i<=end;++i)
-		main_text[cursor_y][i].reset();
+		main_text[y][i].reset();
 }
 void  Console::erase_line(int t){
 	int st=(t==0?cursor_x:0);
@@ -249,7 +249,7 @@ void  Console::erase_line(int t){
 void Console::analise_escape_hash(char c){
 	switch(c){
 		default:
-			printf("ESCAPE_HASH %c\n", c);
+			my_printf("ESCAPE_HASH %c\n", c);
 			status=MAIN;
 			break;
 	}
@@ -258,7 +258,7 @@ void Console::analise_escape_hash(char c){
 void Console::analise_escape_left_br(char c){
 	switch(c){
 		default:
-			printf("ESCAPE_LEFT_BR %c\n", c);
+			my_printf("ESCAPE_LEFT_BR %c\n", c);
 			status=MAIN;
 			break;
 	}
@@ -267,7 +267,7 @@ void Console::analise_escape_left_br(char c){
 void Console::analise_escape_right_br(char c){
 	switch(c){
 		default:
-			printf("ESCAPE_RIGTH_BR %c\n", c);
+			my_printf("ESCAPE_RIGTH_BR %c\n", c);
 			status=MAIN;
 			break;
 	}
@@ -282,7 +282,7 @@ void Console::analise_escape_question(char c){
 	}else
 		switch(c){
 			default:
-				printf("ESCAPE_QUESTION %c\n", c);
+				my_printf("ESCAPE_QUESTION %c\n", c);
 				status=MAIN;
 				break;
 		}
@@ -296,7 +296,7 @@ void Console::analise_escape(char c){
 			break;
 		case '%':
 			status=MAIN;
-			printf("%%!!!\n");
+			my_printf("%%!!!\n");
 			clear_args();
 			break;
 		case '#':
@@ -312,7 +312,7 @@ void Console::analise_escape(char c){
 			clear_args();
 			break;
 		default:
-			printf("%c\n", c);
+			my_printf("%c\n", c);
 			status=MAIN;
 			break;
 	}

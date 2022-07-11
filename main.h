@@ -13,6 +13,8 @@ extern VMINT layer_hdls[2];
 
 const unsigned short tr_color = VM_COLOR_888_TO_565(0, 255, 255);
 
-#ifndef WIN32
-#define printf(...)
+#ifdef WIN32
+#define my_printf(...) printf(__VA_ARGS__)
+#else
+#define my_printf(...)
 #endif
