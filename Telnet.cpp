@@ -77,6 +77,14 @@ void Telnet::DO_command(){
 		case 3: //Suppress Go Ahead
 			send_response_command(WILL, option);
 			break;
+		case 24: //Terminal Type
+			{
+				send_response_command(WILL, option);
+				unsigned char data[8]={0xff, 0xfa, 0x18, 0x00, 0x41, 0x4e, 0x53, 0x49}; //SB
+				send_data((char*)data, 8);
+				send_response_command(SE);
+			}
+			break;
 		case 31://Negotiate About Window Size.
 			{
 				send_response_command(WILL, option);

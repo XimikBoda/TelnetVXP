@@ -159,8 +159,8 @@ void Console::analise_CSI(char c){
 	}else
 		switch(c){
 			case '@':
-				for(int i=0; i<args[0]; ++i)
-					put_char(' ');
+				//for(int i=0; i<args[0]; ++i)
+				//	put_char(' ');
 				status=MAIN;
 				break;
 			case 'A':
@@ -206,13 +206,23 @@ void Console::analise_CSI(char c){
 				break;
 			case 'H':
 			case 'f':
-				cursor_y=scroll_value+get_n_param(0,1)-1;
+				cursor_y=get_n_param(0,1)-1;
 				cursor_x=get_n_param(1,1)-1;
 				check_xy_on_curent_screan();
 				status=MAIN;
 				break;
 			case 'J':
-				erase_display(get_n_param(0));
+				erase_display(args[0]);
+				status=MAIN;
+				break;
+			case 'K':
+				erase_line(args[0]);
+				status=MAIN;
+				break;
+
+			case 'd':
+				cursor_y=get_n_param(0,1)-1;
+				check_xy_on_curent_screan();
 				status=MAIN;
 				break;
 
@@ -238,12 +248,18 @@ void  Console::erase_line(int t, int y){
 	int end=(t==1?cursor_x:terminal_w-1);
 	for(int i=st;i<=end;++i)
 		main_text[y][i].reset();
+	for(int j=st*char_width; j<(end+1)*char_width; ++j)
+		for(int i=0; i<char_height; ++i)
+			((unsigned short*)scr_buf)[(i+y*char_height)*scr_w+j]=0x0000;
 }
 void  Console::erase_line(int t){
 	int st=(t==0?cursor_x:0);
 	int end=(t==1?cursor_x:terminal_w-1);
 	for(int i=st;i<=end;++i)
 		main_text[cursor_y][i].reset();
+	for(int j=st*char_width; j<(end+1)*char_width; ++j)
+		for(int i=0; i<char_height; ++i)
+			((unsigned short*)scr_buf)[(i+cursor_y*char_height)*scr_w+j]=0x0000;
 }
 
 void Console::analise_escape_hash(char c){
@@ -385,6 +401,7 @@ void Console::put_c(char c){
 			analise_escape_question(c);
 			break;
 	}
+	//vm_graphic_flush_layer_non_block(layer_hdls, 1);
 	//vm_graphic_flush_layer(layer_hdls, 1);
 }
 
