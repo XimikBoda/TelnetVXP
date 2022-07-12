@@ -117,19 +117,13 @@ void handle_sysevt(VMINT message, VMINT param) {
 }
 
 void handle_keyevt(VMINT event, VMINT keycode) {
-	switch(event){
-		case VM_KEY_EVENT_DOWN:
-			console.putstr("Test scroll\n");
-			draw();
-			switch(event){
-				case VM_KEY_OK:
-				case VM_KEY_VOL_UP:
-					break;
-				case VM_KEY_LEFT_SOFTKEY:
-					break;
-			}
-			break;
-	}
+#ifdef WIN32
+	if(keycode>=VM_KEY_NUM1&&keycode<=VM_KEY_NUM3)
+		keycode+=6;
+	else if(keycode>=VM_KEY_NUM7&&keycode<=VM_KEY_NUM9)
+		keycode-=6;
+#endif
+	t2input.handle_keyevt(event, keycode);
 }
 
 void handle_penevt(VMINT event, VMINT x, VMINT y){

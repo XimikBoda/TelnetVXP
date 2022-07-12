@@ -1,8 +1,26 @@
 #include "T2Input.h"
+#include "ProFont6x11.h"
+#include "Console.h"
+
+extern Telnet telnet;
 
 static int abs(int a){
 	return a<0?-a:a;
 }
+const char * normal_keyboard[10][10] = 
+{
+	{"0", " ", "", "", "", "", "", "", "", ""},
+	{"1", ".", ",", "\'", "?", "!", "\"", "(', ')", "+", "-"},
+	{"2", "a", "b", "c", "", "", "", "", "", ""},
+	{"3", "d", "e", "f", "", "", "", "", "", ""},
+	{"4", "g", "h", "i", "", "", "", "", "", ""},
+	{"5", "j", "k", "l", "", "", "", "", "", ""},
+	{"6", "m", "n", "o", "", "", "", "", "", ""},
+	{"7", "p", "q", "r", "s", "", "", "", "", ""},
+	{"8", "t", "u", "v", "", "", "", "", "", ""},
+	{"9", "w", "x", "y", "z", "", "", "", "", ""},
+};
+
 
 int T2Input::get_keycode(int x, int y){
 	if(y<scr_h-key_h*5)
@@ -147,24 +165,101 @@ void T2Input::show_current_pressed_key(){
 		}
 }
 
-void  T2Input::handle_penevt(VMINT event, VMINT x, VMINT y){
-	current_key = get_keycode(x, y);
+void T2Input::handle_penevt(VMINT event, VMINT x, VMINT y){
 	switch(event){
-		case VM_PEN_EVENT_TAP:
 		case VM_PEN_EVENT_DOUBLE_CLICK:
+			break;
+		case VM_PEN_EVENT_TAP:
+			if(y<keyboard_h)
+				draw_kb=!draw_kb;
+			current_key = get_keycode(x, y);
+			if(current_key!=255)
+				handle_keyevt(VM_KEY_EVENT_DOWN, current_key);
 			break;
 		case VM_PEN_EVENT_RELEASE:
 		case VM_PEN_EVENT_ABORT:
+			if(current_key!=255)
+				handle_keyevt(VM_KEY_EVENT_UP, current_key);
+			current_key = 255;
 			break;
 		case VM_PEN_EVENT_MOVE:
+			break;
 		case VM_PEN_EVENT_LONG_TAP:
+			if(current_key!=255)
+				handle_keyevt(VM_KEY_EVENT_LONG_PRESS, current_key);
+			break;
 		case VM_PEN_EVENT_REPEAT:
+			if(current_key!=255)
+				handle_keyevt(VM_KEY_EVENT_REPEAT, current_key);
 			break;
 
 	}
 }
 
+void T2Input::send_c(const char*str){
+	telnet.send_data((char*)str, strlen(str));
+}
+
+void T2Input::numpad_input(int keycode){ //TODO: remake this
+	static int cur_s=0, lst_n =0;
+	keycode-=VM_KEY_NUM0;
+	if(cur_s==0)
+		lst_n = keycode, cur_s = 1;
+	else{
+		send_c(normal_keyboard[lst_n][keycode]);
+		cur_s=0;
+	}
+}
+
+void T2Input::handle_keyevt(VMINT event, VMINT keycode){
+	switch(event){
+		case VM_KEY_EVENT_UP:
+			switch(keycode){
+				case VM_KEY_UP:
+					send_c("\033[A");
+					break;
+				case VM_KEY_DOWN:
+					send_c("\033[B");
+					break;
+				case VM_KEY_RIGHT:
+					send_c("\033[C");
+					break;
+				case VM_KEY_LEFT:
+					send_c("\033[D");
+					break;
+				case VM_KEY_RIGHT_SOFTKEY:
+					send_c("\010");
+					break;
+				case VM_KEY_OK:
+					send_c("\r\n");
+					break;
+				default:
+					if(keycode>=VM_KEY_NUM0&&keycode<=VM_KEY_NUM9)
+						numpad_input(keycode);
+					break;
+			}
+			break;
+	}
+}
+
+void T2Input::draw_xy_char(int x, int y, const char*str){
+	const unsigned short textcolor = 0xFFFF , backcolor = 0; 
+	for(;*str;++str){
+		const unsigned char *font_ch=ProFont6x11+5 + 12*(*str) + 1;
+
+		for(int i=0;i<char_height;++i){
+			unsigned short* scr_buf= (unsigned short*)this->scr_buf + x+(y+i)*scr_w;
+			for(int j=0;j<char_width;++j)
+					scr_buf[j]=((((*font_ch)>>j)&1)?textcolor:backcolor);
+			++font_ch;
+		}
+	}
+}
+
 void T2Input::draw(){
+	if(!draw_kb)
+		return;
+
 	show_current_pressed_key();
 	for(int i=0; i<5; ++i)
 		vm_graphic_line(scr_buf, 0, scr_h - (i+1)*key_h, scr_w,  scr_h - (i+1)*key_h, 0xFFFF);
@@ -179,6 +274,24 @@ void T2Input::draw(){
 		vm_graphic_line(scr_buf, squares[i][0], squares[i][1], squares[i+4][0], squares[i+4][1], 0xFFFF);
 		vm_graphic_line(scr_buf, squares[i+4][0], squares[i+4][1], squares[(i+1)%4+4][0], squares[(i+1)%4+4][1], 0xFFFF);
 	}
+
+	for(int k=0; k<10; ++k){
+		int m_x = ((k-1)%3)*key_w, m_y = ((k-1)/3)*key_h+keyboard_h+key_h;
+		if(k==0)
+			m_x = key_w, m_y = scr_h - key_h; 
+		for(int i=0; i<4; ++i){
+			int s_y = char_height/2 + i*(char_height+2);
+			if(i==3)
+				draw_xy_char(m_x+key_w/2 -strlen(normal_keyboard[k][0]), m_y + s_y, normal_keyboard[k][0]);
+			else
+				for(int j=0; j<3; ++j){
+					int s_x = key_w/4*(j+1) - strlen(normal_keyboard[k][1+i*3+j]);
+					draw_xy_char(m_x+s_x, m_y + s_y, normal_keyboard[k][1+i*3+j]);
+				}
+		}
+
+	}
+		
 }
 
 void T2Input::init(){
@@ -187,6 +300,8 @@ void T2Input::init(){
 	keyboard_h = scr_h - key_h*5;
 
 	current_key = 255;
+
+	draw_kb = vm_is_support_pen_touch();
 
 	squares[0][0] = key_w, squares[0][1] = keyboard_h;
 	squares[1][0] = key_w*2, squares[1][1] = keyboard_h;
