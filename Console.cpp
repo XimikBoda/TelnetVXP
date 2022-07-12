@@ -1,7 +1,10 @@
 #include "Console.h"
 #include "vmmm.h"
+#include "Telnet.h"
 #include "ProFont6x11.h"
 const char* Hex_ch = "0123456789ABCDF"; 
+
+extern Telnet telnet;
 
 const unsigned short maincolors[8] = 
 {
@@ -35,8 +38,8 @@ void Console::check_xy_on_curent_screan(){
 		cursor_x=0;
 	if(cursor_x>=terminal_w)
 		cursor_x=terminal_w-1;
-	if(cursor_y<scroll_value)
-		cursor_y=scroll_value;
+	if(cursor_y<0)
+		cursor_y=0;
 	if(cursor_y>=terminal_h)
 		cursor_y=terminal_h-1;
 }
@@ -68,6 +71,16 @@ void Console::attributes(){
 				switch(p){
 					case 1:
 						bright=1;
+						break;
+					case 7:
+						flgs=flgs|1;
+						break;
+				}
+				break;
+			case 1:
+				switch(p){
+					case 0:
+						flgs=0, bright=0;
 						break;
 				}
 				break;
@@ -220,6 +233,30 @@ void Console::analise_CSI(char c){
 				status=MAIN;
 				break;
 
+			case 'P':
+				{
+					int p=get_n_param(0,1);
+					for(int i=cursor_x+1;i<terminal_w-p;++i){
+						main_text[cursor_y][i]=main_text[cursor_y][i+p];
+					}
+					for(int j=(cursor_x+1)*char_width; j<(terminal_w-p)*char_width; ++j)
+						for(int i=0; i<char_height; ++i)
+							((unsigned short*)scr_buf)[(i+cursor_y*char_height)*scr_w+j]=
+								((unsigned short*)scr_buf)[(i+cursor_y*char_height)*scr_w+j+p*char_width];
+
+					for(int i=terminal_w-p;i<terminal_w;++i)
+						main_text[cursor_y][i].reset();
+					for(int j=(terminal_w-p)*char_width; j<(terminal_w)*char_width; ++j)
+						for(int i=0; i<char_height; ++i)
+							((unsigned short*)scr_buf)[(i+cursor_y*char_height)*scr_w+j]=0;
+					status=MAIN;
+				}
+				break;
+
+			case 'c':
+				telnet.send_data("\033[?1;0c");
+				status=MAIN;
+				break;
 			case 'd':
 				cursor_y=get_n_param(0,1)-1;
 				check_xy_on_curent_screan();
@@ -228,6 +265,14 @@ void Console::analise_CSI(char c){
 
 			case 'm':
 				attributes();
+				status=MAIN;
+				break;
+
+			case 'r':
+				if(narg == 2 && args[0] < args[1] && args[0]>0){
+					scroll_start_row=args[0];
+					scroll_end_row=args[1];
+				}
 				status=MAIN;
 				break;
 
@@ -363,6 +408,7 @@ void Console::put_char(char c){//todo UTF-8
 			break;
 		default:
 			main_text[cursor_y][cursor_x].ch=c;
+			main_text[cursor_y][cursor_x].flgs=flgs;
 			main_text[cursor_y][cursor_x].textcolor=cur_textcolor;
 			main_text[cursor_y][cursor_x].backcolor=cur_backcolor;
 			draw_cur_char();
@@ -374,7 +420,7 @@ void Console::put_char(char c){//todo UTF-8
 	}
 }
 
-void Console::put_c(char c){
+void Console::put_c_(char c){
 	switch(status){
 		case MAIN:
 			put_char(c);
@@ -403,6 +449,49 @@ void Console::put_c(char c){
 	}
 	//vm_graphic_flush_layer_non_block(layer_hdls, 1);
 	//vm_graphic_flush_layer(layer_hdls, 1);
+}
+
+void Console::put_c(char c){
+	if(UTF_l==0) 
+		if(c&0x80)
+			if((c&0xE0)==0xC0)
+				UTF_l=2, UTF_i=1, UTF[0]=c;
+			else if((c&0xF0)==0xE0)
+				UTF_l=3, UTF_i=1, UTF[0]=c;
+			else if((c&0xF8)==0xF0)
+				UTF_l=4, UTF_i=1, UTF[0]=c;
+			else
+				put_c_(c);
+		else
+			put_c_(c);
+	else{
+		if((c&0xC0)==0x80){
+			UTF[UTF_i++]=c;
+			if(UTF_i==UTF_l){
+				unicode=0;
+				switch(UTF_l){
+					case 2:
+						unicode=((UTF[0]&0x1F)<<6)|UTF[1]&0x3F;
+						break;
+					case 3:
+						unicode=((((UTF[0]&0xF)<<6)|UTF[1]&0x3F)<<6)|UTF[2]&0x3F;
+						break;
+					case 4:
+						unicode=((((((UTF[0]&0x7)<<6)|UTF[1]&0x3F)<<6)|UTF[2]&0x3F)<<6)|UTF[3]&0x3F;
+						break;
+				}
+				if(unicode==0x2584)
+					put_c_(220);
+				else
+					put_c_(unicode&0xFF);
+				UTF_l=0;
+			}
+		}else{
+			for(int i=0; i<UTF_i; ++i)
+				put_c_(UTF[i]);
+			put_c_(c);
+		}
+	}
 }
 
 void Console::putstr(const char *str, int len){
@@ -507,6 +596,8 @@ void Console::scroll(int v){
 void Console::draw_xy_char(int x, int y){
 	const unsigned char *font_ch=ProFont6x11+5 + 12*main_text[y][x].ch + 1;
 	unsigned short textcolor = main_text[y][x].textcolor , backcolor = main_text[y][x].backcolor; 
+	if(main_text[y][x].flgs&1)
+		textcolor=~textcolor, backcolor=~backcolor;
 
 	for(int i=0;i<char_height;++i){
 		unsigned short* scr_buf= (unsigned short*)this->scr_buf + x*char_width+(y*char_height+i)*scr_w;
@@ -518,6 +609,10 @@ void Console::draw_xy_char(int x, int y){
 
 void Console::draw_cur_char(){
 	const unsigned char *font_ch=ProFont6x11+5 + 12*main_text[cursor_y][cursor_x].ch + 1;
+	unsigned short textcolor = cur_textcolor , backcolor = cur_backcolor; 
+	if(flgs&1)
+		textcolor=~textcolor, backcolor=~backcolor;
+
 	for(int i=0;i<char_height;++i){
 		unsigned short* scr_buf= (unsigned short*)this->scr_buf + cursor_x*char_width+(cursor_y*char_height+i)*scr_w;
 		for(int j=0;j<char_width;++j)
@@ -546,6 +641,8 @@ void Console::init(){
 	scroll_start_row = 0;
 	scroll_end_row = terminal_h;
 	scroll_value = 0;
+
+	UTF_l=0;
 
 	main_color = 0x0000;
 

@@ -50,6 +50,8 @@ void Telnet::send_unsended(){
 }
 
 void Telnet::send_data(char *data, int len){
+	if(len==-1)
+		len=strlen(data);
 	send_unsended();
 	int sended = vm_tcp_write(tcp_handle, data, len);
 	if(sended<=0)
@@ -118,7 +120,7 @@ void Telnet::update(){
 		return;
 	send_unsended();
 
-	int readed = vm_tcp_read(tcp_handle, temp_data, 1024);
+	int readed = vm_tcp_read(tcp_handle, temp_data, 10240);
 	if(readed>0)
 		for(int i=0; i<readed; ++i)
 			switch(status){

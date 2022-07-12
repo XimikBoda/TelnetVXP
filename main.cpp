@@ -49,7 +49,11 @@ void vm_main(void){
 	telnet.init();
 	t2input.init();
 
+#ifdef WIN32
 	telnet.connect_to("127.0.0.1", 23);
+#else
+	telnet.connect_to("ximik.mooo.com", 25565);
+#endif
 
 
 	vm_reg_sysevt_callback(handle_sysevt);
@@ -59,9 +63,11 @@ void vm_main(void){
 
 void draw(){
 	vm_graphic_fill_rect(layer_bufs[1], 0, 0, scr_w, scr_h, tr_color, tr_color);
+	vm_graphic_line(layer_bufs[1], console.cursor_x*char_width, (console.cursor_y+1)*char_height,
+		(console.cursor_x+1)*char_width, (console.cursor_y+1)*char_height, console.cur_textcolor);
 	t2input.draw();
 	vm_graphic_flush_layer(layer_hdls, 2);
-}
+} 
 
 void timer(int tid){
 	telnet.update();

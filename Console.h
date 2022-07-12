@@ -6,12 +6,15 @@ const int count_of_lines = 500;
 
 struct Symbol{
 	char ch;
+	unsigned char flgs;
 	unsigned short textcolor, backcolor;
 	Symbol(){
-		ch=0, textcolor=0xFFFF, backcolor=0x0000;
+		(*(short*)&ch)=0;
+		(*(int*)&textcolor)=0;
 	}
 	void reset(){
-		ch=0, textcolor=0xFFFF, backcolor=0x0000;
+		(*(short*)&ch)=0;
+		(*(int*)&textcolor)=0;
 	}
 };
 
@@ -41,9 +44,14 @@ public:
 
 	bool bright;
 
+	int UTF_l, UTF_i;
+	char UTF[4];
+	int unicode;
+
 
 	unsigned short main_color;
 	unsigned short cur_textcolor, cur_backcolor; 
+	unsigned char flgs;
 
 	VMUINT8* scr_buf;
 
@@ -70,6 +78,7 @@ public:
 	void analise_escape_question(char c);
 	void put_char(char c);
 
+	void put_c_(char c);
 	void put_c(char c);
 	void putstr(const char *str, int len = -1);
 

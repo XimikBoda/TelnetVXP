@@ -22,7 +22,7 @@ public:
 
 	bool is_connected;
 	int tcp_handle;
-	unsigned char temp_data[1024];
+	unsigned char temp_data[10240];
 
 	unsigned char temp_unsend_data[temp_unsended_data_max_size];
 	int temp_unsend_data_size;
@@ -35,7 +35,7 @@ public:
 	Status status, last_status;
 
 	void send_unsended();
-	void send_data(char *data, int len);
+	void send_data(char *data, int len=-1);
 
 	void send_response_command(unsigned char command, unsigned char option);
 	void send_response_command(unsigned char command);
