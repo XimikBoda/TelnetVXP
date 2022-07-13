@@ -16,9 +16,10 @@ public:
 	enum State{
 		MAIN,
 		SECOND_CLICK,
-		NUM_S,
 		F_NUM,
-		SET_MENU
+		SET_MENU,
+		CTRL,
+		CTRL_SECOND_CLICK
 	};
 
 	Input_mode cur_input_mode;

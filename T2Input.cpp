@@ -11,9 +11,9 @@ static int abs(int a){
 const char * normal_keyboard[10][10] = 
 {
 	{"0", " ", "_", "\\", "/", "=", ":", ";", "<", ">"},
-	{"1", ".", ",", "\'", "?", "!", "\"", "(', ')", "+", "-"},
-	{"2", "a", "b", "c", "", "", "", "", "", ""},
-	{"3", "d", "e", "f", "", "", "", "", "", ""},
+	{"1", ".", ",", "\'", "?", "!", "\"", "(", ")", "+"},
+	{"2", "a", "b", "c", "-", "$", "%", "^", "[", "]"},
+	{"3", "d", "e", "f", "{", "}", "*", "&", "#", "¹"},
 	{"4", "g", "h", "i", "", "", "", "", "", ""},
 	{"5", "j", "k", "l", "", "", "", "", "", ""},
 	{"6", "m", "n", "o", "", "", "", "", "", ""},
@@ -24,9 +24,9 @@ const char * normal_keyboard[10][10] =
 const char * big_keyboard[10][10] = 
 {
 	{"0", " ", "_", "\\", "/", "=", ":", ";", "<", ">"},
-	{"1", ".", ",", "\'", "?", "!", "\"", "(', ')", "+", "-"},
-	{"2", "A", "B", "C", "", "", "", "", "", ""},
-	{"3", "D", "E", "F", "", "", "", "", "", ""},
+	{"1", ".", ",", "\'", "?", "!", "\"", "(", ")", "+"},
+	{"2", "A", "B", "C",  "-", "$", "%", "^", "[", "]"},
+	{"3", "D", "E", "F",  "{", "}", "*", "&", "#", "¹"},
 	{"4", "G", "H", "I", "", "", "", "", "", ""},
 	{"5", "J", "K", "L", "", "", "", "", "", ""},
 	{"6", "M", "N", "O", "", "", "", "", "", ""},
@@ -34,8 +34,30 @@ const char * big_keyboard[10][10] =
 	{"8", "T", "U", "V", "", "", "", "", "", ""},
 	{"9", "W", "X", "Y", "Z", "", "", "", "", ""},
 };
+struct name_and_code{
+	char*name;
+	unsigned char code;
+};
+const name_and_code ctrl_keyboard[10][10] = 
+{
+	{{"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {""}},
+	{{"", 0}, {"^[", 27}, {"^]", 29}, {"^\\", 28}, {"^^", 30}, {"^_", 31}, {"", 0}, {"", 0}, {"", 0}, {""}},
+	{{"", 0}, {"^A", 1}, {"^B", 2}, {"^C", 3}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {""}},
+	{{"", 0}, {"^D", 4}, {"^E", 5}, {"^F", 6}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {""}},
+	{{"", 0}, {"^G", 7}, {"^H", 8}, {"^I", 9}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {""}},
+	{{"", 0}, {"^J", 10}, {"^K", 11}, {"^L", 12}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {""}},
+	{{"", 0}, {"^M", 13}, {"^N", 14}, {"^O", 15}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {""}},
+	{{"", 0}, {"^P", 16}, {"^Q", 17}, {"^R", 18}, {"^S", 19}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {""}},
+	{{"", 0}, {"^T", 20}, {"^U", 21}, {"^V", 22}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {""}},
+	{{"", 0}, {"^W", 23}, {"^X", 24}, {"^Y", 25}, {"^Z", 26}, {"", 0}, {"", 0}, {"", 0}, {"", 0}, {""}},
+};
 
 const char * num_keyboard[10] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+const char * Fnum_keyboard[12] = {"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"};
+const char * set_keyboard[12] = {"F%", "CTRL", "", "", "", "", "", "", "", "Back", "", ""};
+
+const char * Fnum_codes[12] = {"\033[1P", "\033[1Q", "\033[1R", "\033[1S", "\033[15~", 
+	"\033[17~", "\033[18~", "\033[19~", "\033[20~", "\033[21~", "\033[23~", "\033[24~"};
 
 const char* imput_modes[4]={"abc", "Abc", "ABC", "123"};
 
@@ -220,18 +242,50 @@ void T2Input::send_c(const char*str){
 
 void T2Input::numpad_input(int keycode){ //TODO: remake this
 	keycode-=VM_KEY_NUM0;
-	if(cur_input_mode==NUM)
-		send_c(num_keyboard[keycode]);
-	else
-		if(state==MAIN)
-			last_imput_key = keycode, state = SECOND_CLICK;
-		else{
-			if(cur_input_mode==SMALL)
-				send_c(normal_keyboard[last_imput_key][keycode]);
+	switch(state){
+		case MAIN:
+		case SECOND_CLICK:
+			if(cur_input_mode==NUM){
+				send_c(num_keyboard[keycode]);
+				state=MAIN;
+			}
 			else
-				send_c(big_keyboard[last_imput_key][keycode]);
-			state=MAIN;
-		}
+				if(state==MAIN)
+					last_imput_key = keycode, state = SECOND_CLICK;
+				else{
+					if(cur_input_mode==SMALL)
+						send_c(normal_keyboard[last_imput_key][keycode]);
+					else
+						send_c(big_keyboard[last_imput_key][keycode]);
+					if(cur_input_mode==FIRST_BIG)
+						cur_input_mode=SMALL;
+					state=MAIN;
+				}
+			break;
+		case F_NUM:
+			send_c(Fnum_codes[keycode-1]);
+			break;
+		case SET_MENU:
+			switch(keycode){
+				case 1:
+					state=F_NUM;
+					break;
+				case 2:
+					state=CTRL;
+					break;
+			}
+			break;
+		case CTRL:
+		case CTRL_SECOND_CLICK:
+			if(state==CTRL)
+				last_imput_key = keycode, state = CTRL_SECOND_CLICK;
+			else{
+				char tmp[2]={ctrl_keyboard[last_imput_key][keycode].code, 0};
+				send_c(tmp);
+				state=CTRL;
+			}
+			break;
+	}
 }
 
 void T2Input::handle_keyevt(VMINT event, VMINT keycode){
@@ -253,11 +307,14 @@ void T2Input::handle_keyevt(VMINT event, VMINT keycode){
 					break;
 				case VM_KEY_RIGHT_SOFTKEY:
 					switch(state){
-						case SECOND_CLICK:
-							state=MAIN;
+						case MAIN:
+							send_c("\177");
+							break;
+						case CTRL_SECOND_CLICK:
+							state=CTRL;
 							break;
 						default:
-							send_c("\177");
+							state=MAIN;
 							break;
 					}
 					break;
@@ -267,9 +324,32 @@ void T2Input::handle_keyevt(VMINT event, VMINT keycode){
 				case VM_KEY_OK:
 					send_c("\r\n");
 					break;
+				case VM_KEY_STAR:
+					switch(state){
+						case MAIN:
+						case CTRL:
+							state=SET_MENU;
+							break;
+						case SET_MENU:
+							state=MAIN;
+							break;
+						case F_NUM:
+							send_c(Fnum_codes[9]);
+							break;
+					}
+					break;
 				case VM_KEY_POUND:
-					cur_input_mode=Input_mode(((int)cur_input_mode+1)%4);
-					last_input_time=time;
+					switch(state){
+						case MAIN:
+							cur_input_mode=Input_mode(((int)cur_input_mode+1)%4);
+							last_input_time=time;
+							break;
+						case SET_MENU:
+							break;
+						case F_NUM:
+							send_c(Fnum_codes[11]);
+							break;
+					}
 					break;
 				default:
 					if(keycode>=VM_KEY_NUM0&&keycode<=VM_KEY_NUM9)
@@ -322,6 +402,7 @@ void T2Input::draw_xy_str_color(int x, int y, unsigned short textcolor,  unsigne
 
 void T2Input::draw(){
 	int time = vm_get_tick_count();
+	typedef const char * temp[10][10];
 
 	if(draw_kb){ // draw screen keyboard
 		show_current_pressed_key();
@@ -341,11 +422,11 @@ void T2Input::draw(){
 
 		draw_xy_str(key_w+key_w/2 -strlen("\\r\\n")*char_width/2, keyboard_h + (key_h-char_height)/2, "\\r\\n");
 
-		typedef const char * temp[10][10];
 		temp *keyboard_t =(temp*)&normal_keyboard; 
 		switch(state){
 			case MAIN:
 				draw_xy_str(key_w*2+key_w/2 -strlen("Backspace")*char_width/2, keyboard_h + (key_h/2-char_height)/2, "Backspace");
+				draw_xy_str(key_w/2 -strlen("SET")*char_width/2, scr_h - key_h + (key_h-char_height)/2, "SET");
 				draw_xy_str(key_w*2+key_w/2 -3*char_width/2, scr_h - key_h + (key_h-char_height)/2, imput_modes[(int)cur_input_mode]);
 				switch(cur_input_mode){
 					case FIRST_BIG:
@@ -396,6 +477,50 @@ void T2Input::draw(){
 						break;
 				}
 				break;
+			case SET_MENU:
+				draw_xy_str(key_w*2+key_w/2 -strlen("Cancel")*char_width/2, keyboard_h + (key_h/2-char_height)/2, "Cancel");
+				for(int k=0; k<12; ++k){
+					int m_x = (k%3)*key_w, m_y = (k/3)*key_h+keyboard_h+key_h;
+					draw_xy_str(m_x+(key_w-char_width*strlen(set_keyboard[k]))/2, m_y + key_h/2-char_height/2, set_keyboard[k]);
+				}
+				break;
+			case F_NUM:
+				draw_xy_str(key_w*2+key_w/2 -strlen("Cancel")*char_width/2, keyboard_h + (key_h/2-char_height)/2, "Cancel");
+				for(int k=0; k<12; ++k){
+					int m_x = (k%3)*key_w, m_y = (k/3)*key_h+keyboard_h+key_h;
+					draw_xy_str(m_x+(key_w-char_width*strlen(Fnum_keyboard[k]))/2, m_y + key_h/2-char_height/2, Fnum_keyboard[k]);
+				}
+				break;
+			case CTRL:
+				draw_xy_str(key_w/2 -strlen("SET")*char_width/2, scr_h - key_h + (key_h-char_height)/2, "SET");
+				draw_xy_str(key_w*2+key_w/2 -strlen("Cancel")*char_width/2, keyboard_h + (key_h/2-char_height)/2, "Cancel");
+				for(int k=0; k<10; ++k){
+					int m_x = ((k-1)%3)*key_w, m_y = ((k-1)/3)*key_h+keyboard_h+key_h;
+					if(k==0)
+						m_x = key_w, m_y = scr_h - key_h; 
+					for(int i=0; i<4; ++i){
+						int s_y = char_height/2 + i*(char_height) - 2;
+						if(i==3)
+							draw_xy_str(m_x+key_w/2 -(char_width*strlen(ctrl_keyboard[k][0].name))/2, m_y + s_y, ctrl_keyboard[k][0].name);
+						else
+							for(int j=0; j<3; ++j){
+								int s_x = key_w/4*(j+1) - char_width*strlen(ctrl_keyboard[k][1+i*3+j].name)/2;
+								draw_xy_str(m_x+s_x, m_y + s_y, ctrl_keyboard[k][1+i*3+j].name);
+							}
+					}
+
+				}
+				break;
+			case CTRL_SECOND_CLICK:
+				draw_xy_str(key_w*2+key_w/2 -strlen("Cancel")*char_width/2, keyboard_h + (key_h/2-char_height)/2, "Cancel");
+				//draw_xy_str(key_w*2+key_w/2 -3*char_width/2, scr_h - key_h + (key_h-char_height)/2, imput_modes[(int)cur_input_mode]);
+				for(int k=0; k<10; ++k){
+					int m_x = ((k-1)%3)*key_w, m_y = ((k-1)/3)*key_h+keyboard_h+key_h;
+					if(k==0)
+						m_x = key_w, m_y = scr_h - key_h; 
+					draw_xy_str(m_x+(key_w-char_width*strlen(ctrl_keyboard[last_imput_key][k].name))/2, m_y + key_h/2-char_height/2, ctrl_keyboard[last_imput_key][k].name);
+				}
+				break;
 		}
 	}
 
@@ -405,7 +530,94 @@ void T2Input::draw(){
 		draw_xy_str_color(x,y,0xFFFF,gray_color,imput_modes[(int)cur_input_mode]);
 		//vm_graphic_fill_rect(scr_buf, 0, scr_h - key_h, key_w, key_h, gray_color, gray_color);
 	}
-		
+	if(!draw_kb){
+		temp *keyboard_t =(temp*)&big_keyboard;
+		if(cur_input_mode==SMALL)
+			keyboard_t = (temp*)&normal_keyboard; 
+		int x, y, w, h;
+		switch(state){
+			case SECOND_CLICK:
+				w=char_width*3+5;
+				h=char_height*4;
+				x=console.cursor_x*char_width;
+				if(x>scr_w-h)
+					x=scr_w-h;
+				if(scr_h-(console.cursor_y+1)*char_height>h)
+					y=(console.cursor_y+1)*char_height;
+				else
+					y=console.cursor_y*char_height-h;
+				vm_graphic_fill_rect(scr_buf, x, y, w, h, gray_color, gray_color);
+				for(int k=0; k<10; ++k){
+					int m_x = x + 1 + (char_width+1)*((k-1)%3), m_y = ((k-1)/3)*char_height + y;
+					if(k==0)
+						m_x = x + 1 + (char_width+1)*1, m_y = 3*char_height + y; 
+					draw_xy_str_color(m_x, m_y, 0xFFFF, gray_color, keyboard_t[0][last_imput_key][k]);
+				}
+				break;
+			case SET_MENU:
+				w=char_width*3*5+5;
+				h=char_height*4;
+				x=console.cursor_x*char_width;
+				if(x>scr_w-h)
+					x=scr_w-h;
+				if(scr_h-(console.cursor_y+1)*char_height>h)
+					y=(console.cursor_y+1)*char_height;
+				else
+					y=console.cursor_y*char_height-h;
+				vm_graphic_fill_rect(scr_buf, x, y, w, h, gray_color, gray_color);
+				for(int k=0; k<12; ++k){
+					int m_x = 1+(k%3)*(char_width*5+1), m_y = (k/3)*char_height;
+					draw_xy_str_color(m_x+x+((5-strlen(set_keyboard[k]))*char_width)/2,y+m_y, 0xFFFF, gray_color, set_keyboard[k]);
+				}
+				break;
+			case F_NUM:
+				w=char_width*3*4+5;
+				h=char_height*4;
+				x=console.cursor_x*char_width;
+				if(x>scr_w-h)
+					x=scr_w-h;
+				if(scr_h-(console.cursor_y+1)*char_height>h)
+					y=(console.cursor_y+1)*char_height;
+				else
+					y=console.cursor_y*char_height-h;
+				vm_graphic_fill_rect(scr_buf, x, y, w, h, gray_color, gray_color);
+				for(int k=0; k<12; ++k){
+					int m_x = 1+(k%3)*(char_width*4+1), m_y = (k/3)*char_height;
+					draw_xy_str_color(m_x+x+(k<10?char_width/2:0),y+m_y, 0xFFFF, gray_color, Fnum_keyboard[k]);
+				}
+				break;
+			case CTRL:
+				w=char_width;
+				h=char_height;
+				x=console.cursor_x*char_width;
+				if(x>scr_w-h)
+					x=scr_w-h;
+				if(scr_h-(console.cursor_y+1)*char_height>h)
+					y=(console.cursor_y+1)*char_height;
+				else
+					y=console.cursor_y*char_height-h;
+				draw_xy_str_color(x,y, 0xFFFF, gray_color, "^");
+				break;
+			case CTRL_SECOND_CLICK:
+				w=char_width*2*3+5;
+				h=char_height*4;
+				x=console.cursor_x*char_width;
+				if(x>scr_w-h)
+					x=scr_w-h;
+				if(scr_h-(console.cursor_y+1)*char_height>h)
+					y=(console.cursor_y+1)*char_height;
+				else
+					y=console.cursor_y*char_height-h;
+				vm_graphic_fill_rect(scr_buf, x, y, w, h, gray_color, gray_color);
+				for(int k=0; k<10; ++k){
+					int m_x = x + 1 + (char_width*2+1)*((k-1)%3), m_y = ((k-1)/3)*char_height + y;
+					if(k==0)
+						m_x = x + 1 + (char_width*2+1)*1, m_y = 3*char_height + y; 
+					draw_xy_str_color(m_x, m_y, 0xFFFF, gray_color, ctrl_keyboard[last_imput_key][k].name);
+				}
+				break;
+		}
+	}
 }
 
 void T2Input::init(){
