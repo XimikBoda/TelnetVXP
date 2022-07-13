@@ -10,11 +10,11 @@ struct Symbol{
 	unsigned short textcolor, backcolor;
 	Symbol(){
 		(*(short*)&ch)=0;
-		(*(int*)&textcolor)=0;
+		textcolor=backcolor=0;
 	}
 	void reset(){
 		(*(short*)&ch)=0;
-		(*(int*)&textcolor)=0;
+		textcolor=backcolor=0;
 	}
 };
 

@@ -269,9 +269,9 @@ void Console::analise_CSI(char c){
 				break;
 
 			case 'r':
-				if(narg == 2 && args[0] < args[1] && args[0]>0){
-					scroll_start_row=args[0];
-					scroll_end_row=args[1];
+				if(narg == 2 && get_n_param(0,1) < get_n_param(1,1)){
+					scroll_start_row=get_n_param(0,1)-1;
+					scroll_end_row=get_n_param(1,1);
 				}
 				status=MAIN;
 				break;
@@ -372,6 +372,14 @@ void Console::analise_escape(char c){
 			status=ESCAPE_RIGTH_BR;
 			clear_args();
 			break;
+		case '7':
+			saved_cursor_x=cursor_x, saved_cursor_y=cursor_y;
+			status=MAIN;
+			break;
+		case '8':
+			cursor_x=saved_cursor_x, cursor_y=saved_cursor_y;
+			status=MAIN;
+			break;
 		default:
 			my_printf("%c\n", c);
 			status=MAIN;
@@ -407,17 +415,19 @@ void Console::put_char(char c){//todo UTF-8
 			status = ESCAPE;
 			break;
 		default:
+			if(c==0)
+				break;
 			main_text[cursor_y][cursor_x].ch=c;
 			main_text[cursor_y][cursor_x].flgs=flgs;
 			main_text[cursor_y][cursor_x].textcolor=cur_textcolor;
 			main_text[cursor_y][cursor_x].backcolor=cur_backcolor;
 			draw_cur_char();
-			if(c!=0)
-				next_p();
+			next_p();
 			
 			break;
 
 	}
+	//vm_graphic_flush_layer(layer_hdls, 1);
 }
 
 void Console::put_c_(char c){
