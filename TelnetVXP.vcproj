@@ -227,6 +227,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Console_io.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\main.cpp"
 				>
 			</File>
@@ -249,6 +253,10 @@
 			>
 			<File
 				RelativePath=".\Console.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Console_io.h"
 				>
 			</File>
 			<File

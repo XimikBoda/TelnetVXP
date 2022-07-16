@@ -1,6 +1,7 @@
 #include "T2Input.h"
 #include "ProFont6x11.h"
 #include "Console.h"
+#include "Console_io.h"
 
 extern Telnet telnet;
 extern Console console;
@@ -237,7 +238,7 @@ void T2Input::handle_penevt(VMINT event, VMINT x, VMINT y){
 }
 
 void T2Input::send_c(const char*str){
-	telnet.send_data((char*)str, strlen(str));
+	console_str_with_length_out((char*)str, strlen(str));
 }
 
 void T2Input::numpad_input(int keycode){ //TODO: remake this

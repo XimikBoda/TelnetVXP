@@ -1,6 +1,7 @@
 #include "Telnet.h"
 #include "Console.h"
 #include "vmsock.h"
+#include "Console_io.h"
 
 extern Console console;
 extern Telnet telnet;
@@ -31,7 +32,7 @@ void Telnet::tcp_callback(VMINT handle, VMINT event){
 			is_connected=0;
 			tcp_handle=-1;
 			sprintf(tmp, "\n\033[mConnect is close (code %d)\n", event);
-			console.putstr(tmp);
+			console_str_in(tmp);
 			break;
 	}
 }
@@ -128,7 +129,7 @@ void Telnet::update(){
 					if((temp_data[i])==0xFF)
 						status = COMMAND, last_status = MAIN;
 					else
-						console.put_c(temp_data[i]);
+						console_char_in(temp_data[i]);
 					break;
 				case COMMAND:
 					switch(temp_data[i]){
@@ -200,7 +201,7 @@ void Telnet::update(){
 					else if(temp_option_data_pos<100)
 						temp_option_data[temp_option_data_pos++]=temp_data[i];
 					else{
-						console.putstr(temp_option_data, temp_option_data_pos);
+						console_str_with_length_in(temp_option_data, temp_option_data_pos);
 						status=MAIN;
 					}
 					break;

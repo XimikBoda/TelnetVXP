@@ -2,6 +2,8 @@
 #include "vmmm.h"
 #include "Telnet.h"
 #include "ProFont6x11.h"
+#include "Console_io.h"
+
 const char* Hex_ch = "0123456789ABCDF"; 
 
 extern Telnet telnet;
@@ -254,7 +256,7 @@ void Console::analise_CSI(char c){
 				break;
 
 			case 'c':
-				telnet.send_data("\033[?1;0c");
+				console_str_out("\033[?1;0c");
 				status=MAIN;
 				break;
 			case 'd':
