@@ -26,9 +26,10 @@ extern "C" void console_char_out(char ch){
 		if(len < BUF_SIZE){ // Prevent buffer overflow
 			if(ch == '\177'){ // Telnet code if 177 for deleting character
 				// Delete the last key
-				if(len > 1) // Only delete if there is something in the buffer
+				if(len > 1) { // Only delete if there is something in the buffer
 					t2input.str_buf[len - 1] = (char)'\0'; // Clear it
 					console_char_in('\b\b'); // Sending \b\b for deleting character
+				}
 			} else {
 				if(t2input.input_done == 0)
 					t2input.str_buf[len] = ch;
