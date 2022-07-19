@@ -82,19 +82,7 @@ Refer to [this](https://4pda.to/forum/index.php?showtopic=1041371&st=0) or [this
 - Step 8: Copy the VXP file to the phone (by using USB cable or SD card is up to you). Then open the file manager, find the signed VXP app and press open to run.
 
 ## How to use?
-(Prompt for host and port is being added, please wait)
-
-You can see in [`main.cpp`](https://github.com/XimikBoda/TelnetVXP/blob/main/main.cpp) there was:
-
-```cpp
-#ifdef WIN32
-	telnet.connect_to("127.0.0.1", 23);
-#else
-	telnet.connect_to("ximik.mooo.com", 25565);
-#endif
-```
-
-Change this to the telnet host & port you want to connect to. For example `telnet.connect_to("telehack.com", 23);` and `telnet.connect_to("sdf.org", 23);` usually a good start
+When you open the app, it will prompt you for inputing the host and port to connect to. If it can't connect to the host & port you provided, it will quit after 25 seconds.
 
 ## Virtual keyboard
 
