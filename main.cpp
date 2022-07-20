@@ -152,14 +152,15 @@ void handle_sysevt(VMINT message, VMINT param) {
 		t2input.scr_buf=layer_bufs[1];
 		t2input.layer_handle=layer_hdls[1];
 
-		// Prompt for host & port to connect
-		t2input.input_mode = 1; // Get input from keyboard to buffer
+		if(message == VM_MSG_CREATE){ //only when app start
+			// Prompt for host & port to connect
+			t2input.input_mode = 1; // Get input from keyboard to buffer
 
-		console_str_in("Welcome to TelnetVXP!\n");
-		console_str_in("Written by Ximik_Boda & TelnetVXP contributors\n");
+			console_str_in("Welcome to TelnetVXP!\n");
+			console_str_in("Written by Ximik_Boda & TelnetVXP contributors\n");
 
-		prompt_timer_id = vm_create_timer(1000, prompt); // Check the prompt for every 1 second
-
+			prompt_timer_id = vm_create_timer(1000, prompt); // Check the prompt for every 1 second
+		}
 		if(main_timer_id==-1)
 			main_timer_id = vm_create_timer(1000/15, timer); //15 fps
 		break;
