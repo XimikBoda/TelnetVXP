@@ -48,7 +48,6 @@ public:
 	char UTF[4];
 	int unicode;
 
-
 	unsigned short main_color;
 	unsigned short cur_textcolor, cur_backcolor; 
 	unsigned char flgs;

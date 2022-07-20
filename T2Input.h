@@ -40,6 +40,10 @@ public:
 
 	int squares[8][2];
 
+	int input_mode; // 0 -> output to telnet socket, 1 -> output to buffer
+	int input_done;
+	char str_buf[BUF_SIZE];  // temp buf for storing input if input_mode is 1
+
 	int get_keycode(int x, int y);
 
 	void send_c(const char*str);
@@ -58,5 +62,7 @@ public:
 	void draw();
 	void init();
 	~T2Input(void);
+
+	void free_buffer();
 };
 
