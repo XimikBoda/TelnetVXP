@@ -60,7 +60,7 @@ const char * set_keyboard[12] = {"F%", "CTRL", "", "TAB", "", "", "", "", "", "B
 const char * Fnum_codes[12] = {"\033[1P", "\033[1Q", "\033[1R", "\033[1S", "\033[15~", 
 	"\033[17~", "\033[18~", "\033[19~", "\033[20~", "\033[21~", "\033[23~", "\033[24~"};
 
-const char* imput_modes[4]={"abc", "Abc", "ABC", "123"};
+const char* input_modes[4]={"abc", "Abc", "ABC", "123"};
 
 
 int T2Input::get_keycode(int x, int y){
@@ -252,12 +252,12 @@ void T2Input::numpad_input(int keycode){ //TODO: remake this
 			}
 			else
 				if(state==MAIN)
-					last_imput_key = keycode, state = SECOND_CLICK;
+					last_input_key = keycode, state = SECOND_CLICK;
 				else{
 					if(cur_input_mode==SMALL)
-						send_c(normal_keyboard[last_imput_key][keycode]);
+						send_c(normal_keyboard[last_input_key][keycode]);
 					else
-						send_c(big_keyboard[last_imput_key][keycode]);
+						send_c(big_keyboard[last_input_key][keycode]);
 					if(cur_input_mode==FIRST_BIG)
 						cur_input_mode=SMALL;
 					state=MAIN;
@@ -283,9 +283,9 @@ void T2Input::numpad_input(int keycode){ //TODO: remake this
 		case CTRL:
 		case CTRL_SECOND_CLICK:
 			if(state==CTRL)
-				last_imput_key = keycode, state = CTRL_SECOND_CLICK;
+				last_input_key = keycode, state = CTRL_SECOND_CLICK;
 			else{
-				char tmp[2]={ctrl_keyboard[last_imput_key][keycode].code, 0};
+				char tmp[2]={ctrl_keyboard[last_input_key][keycode].code, 0};
 				send_c(tmp);
 				state=CTRL;
 			}
@@ -432,7 +432,7 @@ void T2Input::draw(){
 			case MAIN:
 				draw_xy_str(key_w*2+key_w/2 -strlen("Backspace")*char_width/2, keyboard_h + (key_h/2-char_height)/2, "Backspace");
 				draw_xy_str(key_w/2 -strlen("SET")*char_width/2, scr_h - key_h + (key_h-char_height)/2, "SET");
-				draw_xy_str(key_w*2+key_w/2 -3*char_width/2, scr_h - key_h + (key_h-char_height)/2, imput_modes[(int)cur_input_mode]);
+				draw_xy_str(key_w*2+key_w/2 -3*char_width/2, scr_h - key_h + (key_h-char_height)/2, input_modes[(int)cur_input_mode]);
 				switch(cur_input_mode){
 					case FIRST_BIG:
 					case BIG:
@@ -467,7 +467,7 @@ void T2Input::draw(){
 				break;
 			case SECOND_CLICK:
 				draw_xy_str(key_w*2+key_w/2 -strlen("Cancel")*char_width/2, keyboard_h + (key_h/2-char_height)/2, "Cancel");
-				//draw_xy_str(key_w*2+key_w/2 -3*char_width/2, scr_h - key_h + (key_h-char_height)/2, imput_modes[(int)cur_input_mode]);
+				//draw_xy_str(key_w*2+key_w/2 -3*char_width/2, scr_h - key_h + (key_h-char_height)/2, input_modes[(int)cur_input_mode]);
 				switch(cur_input_mode){
 					case FIRST_BIG:
 					case BIG:
@@ -477,7 +477,7 @@ void T2Input::draw(){
 							int m_x = ((k-1)%3)*key_w, m_y = ((k-1)/3)*key_h+keyboard_h+key_h;
 							if(k==0)
 								m_x = key_w, m_y = scr_h - key_h; 
-							draw_xy_char(m_x+(key_w-char_width)/2, m_y + key_h/2-char_height/2, keyboard_t[0][last_imput_key][k]);
+							draw_xy_char(m_x+(key_w-char_width)/2, m_y + key_h/2-char_height/2, keyboard_t[0][last_input_key][k]);
 						}
 						break;
 				}
@@ -518,12 +518,12 @@ void T2Input::draw(){
 				break;
 			case CTRL_SECOND_CLICK:
 				draw_xy_str(key_w*2+key_w/2 -strlen("Cancel")*char_width/2, keyboard_h + (key_h/2-char_height)/2, "Cancel");
-				//draw_xy_str(key_w*2+key_w/2 -3*char_width/2, scr_h - key_h + (key_h-char_height)/2, imput_modes[(int)cur_input_mode]);
+				//draw_xy_str(key_w*2+key_w/2 -3*char_width/2, scr_h - key_h + (key_h-char_height)/2, input_modes[(int)cur_input_mode]);
 				for(int k=0; k<10; ++k){
 					int m_x = ((k-1)%3)*key_w, m_y = ((k-1)/3)*key_h+keyboard_h+key_h;
 					if(k==0)
 						m_x = key_w, m_y = scr_h - key_h; 
-					draw_xy_str(m_x+(key_w-char_width*strlen(ctrl_keyboard[last_imput_key][k].name))/2, m_y + key_h/2-char_height/2, ctrl_keyboard[last_imput_key][k].name);
+					draw_xy_str(m_x+(key_w-char_width*strlen(ctrl_keyboard[last_input_key][k].name))/2, m_y + key_h/2-char_height/2, ctrl_keyboard[last_input_key][k].name);
 				}
 				break;
 		}
@@ -532,7 +532,7 @@ void T2Input::draw(){
 	const unsigned short gray_color = VM_COLOR_888_TO_565(50, 50, 50); 
 	if(!(time - last_input_time >= 1000 || last_input_time > time)){ //draw input mode
 		int y = (console.cursor_y==0?char_height:0), x = scr_w - 3*char_width;
-		draw_xy_str_color(x,y,0xFFFF,gray_color,imput_modes[(int)cur_input_mode]);
+		draw_xy_str_color(x,y,0xFFFF,gray_color,input_modes[(int)cur_input_mode]);
 		//vm_graphic_fill_rect(scr_buf, 0, scr_h - key_h, key_w, key_h, gray_color, gray_color);
 	}
 	if(!draw_kb){
@@ -556,7 +556,7 @@ void T2Input::draw(){
 					int m_x = x + 1 + (char_width+1)*((k-1)%3), m_y = ((k-1)/3)*char_height + y;
 					if(k==0)
 						m_x = x + 1 + (char_width+1)*1, m_y = 3*char_height + y; 
-					draw_xy_str_color(m_x, m_y, 0xFFFF, gray_color, keyboard_t[0][last_imput_key][k]);
+					draw_xy_str_color(m_x, m_y, 0xFFFF, gray_color, keyboard_t[0][last_input_key][k]);
 				}
 				break;
 			case SET_MENU:
@@ -618,7 +618,7 @@ void T2Input::draw(){
 					int m_x = x + 1 + (char_width*2+1)*((k-1)%3), m_y = ((k-1)/3)*char_height + y;
 					if(k==0)
 						m_x = x + 1 + (char_width*2+1)*1, m_y = 3*char_height + y; 
-					draw_xy_str_color(m_x, m_y, 0xFFFF, gray_color, ctrl_keyboard[last_imput_key][k].name);
+					draw_xy_str_color(m_x, m_y, 0xFFFF, gray_color, ctrl_keyboard[last_input_key][k].name);
 				}
 				break;
 		}
