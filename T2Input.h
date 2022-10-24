@@ -24,7 +24,7 @@ public:
 
 	Input_mode cur_input_mode;
 	int last_input_time;
-	int last_imput_key;
+	int last_input_key;
 
 	State state;
 	
